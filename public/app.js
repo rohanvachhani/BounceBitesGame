@@ -78,24 +78,68 @@ function createName() {
 
 (function () {
 
-    let playerID;
-    let playerRef;
-    const playerNameInput = document.querySelector("#player-name");
+    let playerId;       // gives ID of player who's logged into the firebase
+    let playerRef;      // reference to refer player obj's data from firebase
+    let players = {};    // local list of states, where every character is in the game i.e looking players obj to update all DOM nodes on the screen
+    let playerElements = {};    // list of references to our actual DOM elements
 
-    let playerElements = {};
-
+    
     //reference to the DOM element
     const gameContainer = document.querySelector(".game-container");
+    const playerNameInput = document.querySelector("#player-name");  
+    const playerColorButton = document.querySelector("#player-color");
 
-    console.log("into the function block to execute firebase auth")
+
+    function handleArrowPress(xChange = 0, yChange = 0) {
+        const newX = players[playerId].x + xChange;
+        const newY = players[playerId].y + yChange;
+
+        if (true) {  //is it a movable space in the map?
+            //move to the next space
+            players[playerId].x = newX;
+            players[playerId].y = newY;
+            if (xChange === 1) {
+                players[playerId].direction = "right";
+            }
+            if (xChange === -1) {
+                players[playerId].direction = "left";
+            }
+
+            playerRef.set(players[playerId]);
+
+        }
+    }
 
     function initGame() {
+        new KeyPressListener("ArrowUp", () => handleArrowPress(0, -1));
+        new KeyPressListener("ArrowDown", () => handleArrowPress(0, 1));
+        new KeyPressListener("ArrowLeft", () => handleArrowPress(-1, 0));
+        new KeyPressListener("ArrowRight", () => handleArrowPress(1, 0));
+
         const allPlayerRef = firebase.database().ref(`players`);
         const allConinsRef = firebase.database().ref(`coins`);
 
         allPlayerRef.on("value", (snapshot) => {
             //triggers whenever a change occurs i.e any values inside the player object changes
 
+            //sync value of position for the character from firebase
+            players = snapshot.val() || {};
+            Object.keys(players).forEach((key) => {
+                const characterState = players[key];
+                console.log("current players's character state : ", characterState)
+                let el = playerElements[key];       //reference to the that character's DOM element 
+
+                //now update the dom, as per the updated values of element
+                el.querySelector(".Character_name").innerText = characterState.name;
+                el.querySelector(".Character_coins").innerText = characterState.coins;
+                el.setAttribute("data-color", characterState.color);
+                el.setAttribute("data-direction", characterState.direction);
+                const left = 16 * characterState.x + "px";
+                const top = 16 * characterState.y - 4 + "px";
+                el.style.transform = `translate3d(${left}, ${top}, 0)`;
+
+            })
+            console.log("current player's reference from firebase: ", players)
         })
 
         allPlayerRef.on("child_added", (snapshot) => {
@@ -105,7 +149,7 @@ function createName() {
             const characterElement = document.createElement("div");
             characterElement.classList.add("Character", "grid-cell");
 
-            if (addedPlayer.id === playerID) {
+            if (addedPlayer.id === playerId) {
                 characterElement.classList.add("you");
             }
 
@@ -133,7 +177,7 @@ function createName() {
             characterElement.style.transform = `translate3d(${left}, ${top}, 0)`;       //for fluid smooth movement on the board
 
 
-            gameContainer.appendChild(characterElement); 
+            gameContainer.appendChild(characterElement);
 
 
 
@@ -146,15 +190,14 @@ function createName() {
         console.log("user ", user);
         if (user) {
             //user is logged in
-            playerID = user.uid;
-            playerRef = firebase.database().ref(`players/${playerID}`);
+            playerId = user.uid;
+            playerRef = firebase.database().ref(`players/${playerId}`);
 
             const name = createName();
             playerNameInput.value = name;
 
-
             playerRef.set({
-                id: playerID,
+                id: playerId,
                 name,
                 direction: "right",
                 color: randomFromArray(playerColors),
