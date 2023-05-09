@@ -1,4 +1,24 @@
 
+const mapData = {
+    minX: 0,
+    maxX: 14,
+    minY: 3,
+    maxY: 12,
+    blockedSpaces: {        //position: colxrow
+        "7x4": true,
+        "1x11": true,
+        "12x10": true,
+        "4x7": true,
+        "5x7": true,
+        "6x7": true,
+        "8x6": true,
+        "9x6": true,
+        "10x6": true,
+        "7x9": true,
+        "8x9": true,
+        "9x9": true,
+    },
+};
 
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
@@ -76,6 +96,49 @@ function createName() {
     return `${prefix} ${animal}`;
 }
 
+function isSolid(x, y) {
+
+    const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
+
+    return (
+        blockedNextSpace ||
+        x >= mapData.maxX ||
+        x <= mapData.minX ||
+        y >= mapData.maxY ||
+        y <= mapData.minY
+    )
+
+}
+
+function getRandomSafeSpot() {
+    //We don't look things up by key here, so just return an x/y
+    return randomFromArray([
+        { x: 1, y: 4 },
+        { x: 2, y: 4 },
+        { x: 1, y: 5 },
+        { x: 2, y: 6 },
+        { x: 2, y: 8 },
+        { x: 2, y: 9 },
+        { x: 4, y: 8 },
+        { x: 5, y: 5 },
+        { x: 5, y: 8 },
+        { x: 5, y: 10 },
+        { x: 5, y: 11 },
+        { x: 11, y: 7 },
+        { x: 12, y: 7 },
+        { x: 13, y: 7 },
+        { x: 13, y: 6 },
+        { x: 13, y: 8 },
+        { x: 7, y: 6 },
+        { x: 7, y: 7 },
+        { x: 7, y: 8 },
+        { x: 8, y: 8 },
+        { x: 10, y: 8 },
+        { x: 8, y: 8 },
+        { x: 11, y: 4 },
+    ]);
+}
+
 (function () {
 
     let playerId;       // gives ID of player who's logged into the firebase
@@ -83,10 +146,10 @@ function createName() {
     let players = {};    // local list of states, where every character is in the game i.e looking players obj to update all DOM nodes on the screen
     let playerElements = {};    // list of references to our actual DOM elements
 
-    
+
     //reference to the DOM element
     const gameContainer = document.querySelector(".game-container");
-    const playerNameInput = document.querySelector("#player-name");  
+    const playerNameInput = document.querySelector("#player-name");
     const playerColorButton = document.querySelector("#player-color");
 
 
@@ -94,7 +157,7 @@ function createName() {
         const newX = players[playerId].x + xChange;
         const newY = players[playerId].y + yChange;
 
-        if (true) {  //is it a movable space in the map?
+        if (!isSolid(newX, newY)) {  //is it a movable space in the map?
             //move to the next space
             players[playerId].x = newX;
             players[playerId].y = newY;
@@ -179,10 +242,39 @@ function createName() {
 
             gameContainer.appendChild(characterElement);
 
-
-
-
         })
+
+        //remove character's DOM element after they leave the game
+        allPlayerRef.on("child_removed", (snapshot) => {
+            const removeKey = snapshot.val().id;
+            gameContainer.removeChild(playerElements[removeKey]);
+            delete playerElements[removeKey];
+        });
+
+        //update player's name with the text input
+        playerNameInput.addEventListener("change", (e) => {
+            let newName = e.target.value.trim();  // Remove leading/trailing whitespace characters from the input
+
+            if (newName.length === 0) {  // Check if the new name consists only of whitespace characters
+                newName = createName();  // Generate a new random name if the input is invalid
+            }
+
+            playerNameInput.value = newName;
+            playerRef.update({
+                name: newName
+            });
+        });
+
+        //update player's color with the color botton click
+        playerColorButton.addEventListener("click", (e) => {
+            console.log("player color button clicked!");
+            const currentColorIndex = playerColors.indexOf(players[playerId].color);
+            const newColor = playerColors[(currentColorIndex + 1) % playerColors.length]; 
+            playerRef.update({
+                color: newColor
+            });
+        });
+
 
     }
 
@@ -196,13 +288,15 @@ function createName() {
             const name = createName();
             playerNameInput.value = name;
 
+            const { x, y } = getRandomSafeSpot();
+
             playerRef.set({
                 id: playerId,
                 name,
                 direction: "right",
                 color: randomFromArray(playerColors),
-                x: 3,
-                y: 10,
+                x,
+                y,
                 coins: 0
             })
 
