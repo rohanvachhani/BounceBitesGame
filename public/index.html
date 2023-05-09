@@ -1,6 +1,7 @@
-<html>
+<!DOCTYPE html>
+<html lang="en-US">
 <head>
-    <title>Multiplayer Demo</title>
+    <title>Bounce Bites</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
@@ -20,25 +21,44 @@
     </div>
 </div>
 
+
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
-    // NOTE - INCLUDE YOUR FIREBASE CONFIG HERE FOR ANYTHING TO WORK:
+    
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
     const firebaseConfig = {
-        apiKey: "",
-        authDomain: "",
-        databaseURL: "",
-        projectId: "",
-        storageBucket: "",
-        messagingSenderId: "",
-        appId: ""
+        apiKey: "AIzaSyBxsrMHwGvpXUOEV9YuUHV4Dfx1KElccNo",
+        authDomain: "bounce-bites.firebaseapp.com",
+        databaseURL: "https://bounce-bites-default-rtdb.firebaseio.com",
+        projectId: "bounce-bites",
+        storageBucket: "bounce-bites.appspot.com",
+        messagingSenderId: "926419024096",
+        appId: "1:926419024096:web:aba5a82f6dc396fd2a3885",
+        measurementId: "G-TE65E4T191"
     };
-    firebase.initializeApp(firebaseConfig);
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    // console.log(app);
+
+
+
 </script>
 
-
+<!-- these js files must come after firebase setup above, so that they can use firebase in them -->
 <script src="/KeyPressListener.js"></script>
 <script src="/app.js"></script>
+
+
 </body>
 </html>
+
